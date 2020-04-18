@@ -1,6 +1,5 @@
-name: ${name}
-version: ${version}
-description: ${description}
+name: ChibakuTensei
+version: 1.0-SNAPSHOT
 author: Miguel
 
 main: com.miguel.Main

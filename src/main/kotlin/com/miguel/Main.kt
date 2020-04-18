@@ -1,5 +1,6 @@
 package com.miguel
 
+import com.miguel.listener.PlayerEvents
 import com.miguel.utils.Strings
 import org.bukkit.event.HandlerList
 import org.bukkit.plugin.java.JavaPlugin
@@ -24,7 +25,7 @@ class Main : JavaPlugin() {
     }
 
     override fun onEnable() {
-
+        server.pluginManager.registerEvents(PlayerEvents(), this)
 
         println("${Strings.PREFIX} Plugin ativado")
     }
