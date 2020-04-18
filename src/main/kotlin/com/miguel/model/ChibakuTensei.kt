@@ -7,6 +7,7 @@ import org.bukkit.Material
 import org.bukkit.entity.Entity
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.FallingBlock
+import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.util.Vector
 import java.util.*
@@ -24,61 +25,74 @@ class ChibakuTensei {
     }
 
     fun chibaku(location: Location, radius: Int) {
-        val add = location.clone().add(0.0, 50.0, 0.0)
+        Thread(Runnable {
+            val add = location.clone().add(0.0, 50.0, 0.0)
 
-        val toSphere = manager.generateSphere(add, radius, false)
-        var sphere = manager.sphere(location, radius)
+            val toSphere = manager.generateSphere(add, radius, false)
+            var sphere = manager.sphere(location, radius)
 
-        var i = radius
-        while (sphere.size < toSphere.size) {
-            i++
-            sphere = manager.sphere(location, i)
-        }
-
-        toSphere.sortWith(Comparator.comparingDouble { obj: Location -> obj.y })
-        toSphere.reverse()
-        toSphere.sortWith(Comparator.comparingDouble { value: Location -> value.distance(add) })
-
-        sphere.sortWith(Comparator.comparingDouble { value: Location -> value.distance(location) })
-        sphere.sortWith(Comparator.comparingDouble { obj: Location -> obj.y })
-        sphere.reverse()
-
-        object : BukkitRunnable() {
-            var x = -1
-            val world = location.world
-            override fun run() {
-                if (x != toSphere.size - 1) {
-                    x++
-
-                    val fromLocation = sphere[x]
-                    val toLocation = toSphere[x]
-
-                    val fallingBlockEntity = world.spawnEntity(fromLocation, EntityType.FALLING_BLOCK)
-
-                    fallingBlockEntity.velocity = Vector(.0, 2.0, .0)
-                    designatedLocation[fallingBlockEntity] = toLocation
-
-                } else {
-                    cancel()
-                }
+            var i = radius
+            while (sphere.size < toSphere.size) {
+                i++
+                sphere = manager.sphere(location, i)
             }
-        }.runTaskTimer(Main.instace, 0L, 0L)
 
-        val s = arrayOf(designatedLocation.values)
+            toSphere.sortWith(Comparator.comparingDouble { obj: Location -> obj.y })
+            toSphere.reverse()
+            toSphere.sortWith(Comparator.comparingDouble { value: Location -> value.distance(add) })
 
-        object : BukkitRunnable() {
-            override fun run() {
-                if (put.size == toSphere.size)
-                    cancel()
+            sphere.sortWith(Comparator.comparingDouble { obj: Location -> obj.y })
+            sphere.reverse()
+            sphere.sortWith(Comparator.comparingDouble { value: Location -> value.distance(location) })
 
-                designatedLocation.forEach { entry ->
-                    val entity = entry.key
-                    val designated = entry.value
+            object : BukkitRunnable() {
+                var x = -1
+                val world = location.world
+                override fun run() {
+                    if (x != toSphere.size - 1) {
+                        x++
 
-                    val fallingBlock = entity as FallingBlock
+                        val fromLocation = sphere[x]
+                        val toLocation = toSphere[x]
 
-                    put.forEach { putt ->
-                        if (entity.location.distance(putt) <= radius - (radius * 0.3)) {
+                        val fallingBlockEntity = world.spawnEntity(fromLocation, EntityType.FALLING_BLOCK)
+
+                        fallingBlockEntity.velocity = Vector(.0, 3.0, .0)
+                        designatedLocation[fallingBlockEntity] = toLocation
+
+                    } else {
+                        cancel()
+                    }
+                }
+            }.runTaskTimer(Main.instace, 0L, 0L)
+
+            object : BukkitRunnable() {
+                val sphereMass = toSphere.size * 1200
+
+                override fun run() {
+                    if (put.size == toSphere.size)
+                        cancel()
+
+                    designatedLocation.forEach { entry ->
+                        val entity = entry.key
+                        val designated = entry.value
+
+                        val fallingBlock = entity as FallingBlock
+
+                        put.forEach { putt ->
+                            if (entity.location.distance(putt) <= radius - (radius * 0.4)) {
+                                designated.block.type = mat(fallingBlock.material)
+
+                                put.add(designated)
+
+                                designatedLocation.remove(entity)
+
+                                entity.remove()
+                                return
+                            }
+                        }
+
+                        if (entity.location.distance(designated) <= radius - (radius * 0.4)) {
                             designated.block.type = mat(fallingBlock.material)
 
                             put.add(designated)
@@ -88,34 +102,29 @@ class ChibakuTensei {
                             entity.remove()
                             return
                         }
+
+                        val subtract = designated.toVector().subtract(entity.location.toVector())
+                        subtract.multiply((18.96 * sphereMass * 1200) / sqrt(location.distance(entity.location)))
+
+                        entity.velocity = subtract.normalize().multiply(2)
+
+                        entity.getNearbyEntities(10.0, 10.0, 10.0).forEach { nearby ->
+                            if (nearby is Player || nearby is FallingBlock)
+                                return@forEach
+
+                            nearby.velocity = designated.toVector().subtract(nearby.location.toVector()).normalize()
+                        }
                     }
-
-                    if (entity.location.distance(designated) <= radius - (radius * 0.3)) {
-                        designated.block.type = mat(fallingBlock.material)
-
-                        put.add(designated)
-
-                        designatedLocation.remove(entity)
-
-                        entity.remove()
-                        return
-                    }
-
-                    val subtract = designated.toVector().subtract(entity.location.toVector())
-
-                    subtract.y *= 17.5 / (sqrt(designated.y - entity.location.y))
-
-                    entity.velocity = subtract.multiply(0.003).normalize()
                 }
-            }
 
-            override fun cancel() {
-                designatedLocation.clear()
-                put.clear()
+                override fun cancel() {
+                    designatedLocation.clear()
+                    put.clear()
 
-                super.cancel()
-            }
-        }.runTaskTimer(Main.instace, 0L, 0L)
+                    super.cancel()
+                }
+            }.runTaskTimer(Main.instace, 0L, 0L)
+        }).start()
     }
 
     fun mat(material: Material): Material {
