@@ -21,6 +21,8 @@ class Main : JavaPlugin() {
         config.options().copyDefaults()
         config.options().copyHeader()
 
+        saveDefaultConfig()
+
         println("${Strings.PREFIX} Carregado com sucesso!")
     }
 
@@ -31,6 +33,8 @@ class Main : JavaPlugin() {
     }
 
     override fun onDisable() {
+        saveConfig()
+
         HandlerList.unregisterAll(this)
 
         println("${Strings.PREFIX} Plugin desativado")

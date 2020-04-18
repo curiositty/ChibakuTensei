@@ -5,7 +5,7 @@ import java.util.*
 
 class Manager {
 
-    fun generateSphere(centerBlock: Location, radius: Int, hollow: Boolean): List<Location> {
+    fun generateSphere(centerBlock: Location, radius: Int, hollow: Boolean): MutableList<Location> {
         val circleBlocks: MutableList<Location> = ArrayList<Location>()
 
         val bx: Int = centerBlock.blockX
@@ -28,7 +28,7 @@ class Manager {
         return circleBlocks
     }
 
-    fun sphere(location: Location, radius: Int): List<Location> {
+    fun sphere(location: Location, radius: Int): MutableList<Location> {
         val list: MutableList<Location> = ArrayList<Location>()
         for (i in 0 until radius) {
             for (x in -radius..radius) {

@@ -9,11 +9,9 @@ import org.bukkit.entity.EntityType
 import org.bukkit.entity.FallingBlock
 import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.util.Vector
-import java.util.ArrayList
-import java.util.Collections
-import java.util.HashMap
-import kotlin.Comparator
-import kotlin.IllegalStateException
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.math.sqrt
 
 
 class ChibakuTensei {
@@ -37,13 +35,13 @@ class ChibakuTensei {
             sphere = manager.sphere(location, i)
         }
 
-        toSphere.sortedBy { location -> location.y }
-        //toSphere.reversed()
-        //toSphere.sortedBy { location -> location.distance(add) }
+        toSphere.sortWith(Comparator.comparingDouble { obj: Location -> obj.y })
+        toSphere.reverse()
+        toSphere.sortWith(Comparator.comparingDouble { value: Location -> value.distance(add) })
 
-        sphere.sortedBy { loc -> loc.distance(location) }
-        //sphere.sortedBy { loc -> loc.y }
-        //sphere.reversed()
+        sphere.sortWith(Comparator.comparingDouble { value: Location -> value.distance(location) })
+        sphere.sortWith(Comparator.comparingDouble { obj: Location -> obj.y })
+        sphere.reverse()
 
         object : BukkitRunnable() {
             var x = -1
@@ -57,7 +55,7 @@ class ChibakuTensei {
 
                     val fallingBlockEntity = world.spawnEntity(fromLocation, EntityType.FALLING_BLOCK)
 
-                    fallingBlockEntity.velocity = Vector(1.0, 2.0, 1.0)
+                    fallingBlockEntity.velocity = Vector(.0, 2.0, .0)
                     designatedLocation[fallingBlockEntity] = toLocation
 
                 } else {
@@ -65,6 +63,8 @@ class ChibakuTensei {
                 }
             }
         }.runTaskTimer(Main.instace, 0L, 0L)
+
+        val s = arrayOf(designatedLocation.values)
 
         object : BukkitRunnable() {
             override fun run() {
@@ -78,7 +78,7 @@ class ChibakuTensei {
                     val fallingBlock = entity as FallingBlock
 
                     put.forEach { putt ->
-                        if(entity.location.distance(putt) <= radius) {
+                        if (entity.location.distance(putt) <= radius - (radius * 0.3)) {
                             designated.block.type = mat(fallingBlock.material)
 
                             put.add(designated)
@@ -90,7 +90,7 @@ class ChibakuTensei {
                         }
                     }
 
-                    if (entity.location.distance(designated) <= radius) {
+                    if (entity.location.distance(designated) <= radius - (radius * 0.3)) {
                         designated.block.type = mat(fallingBlock.material)
 
                         put.add(designated)
@@ -102,7 +102,10 @@ class ChibakuTensei {
                     }
 
                     val subtract = designated.toVector().subtract(entity.location.toVector())
-                    entity.velocity = subtract.normalize().multiply(1.2)
+
+                    subtract.y *= 17.5 / (sqrt(designated.y - entity.location.y))
+
+                    entity.velocity = subtract.multiply(0.003).normalize()
                 }
             }
 
@@ -115,10 +118,10 @@ class ChibakuTensei {
         }.runTaskTimer(Main.instace, 0L, 0L)
     }
 
-    fun mat(material: Material) : Material {
+    fun mat(material: Material): Material {
         val ret: Material
 
-        when(material) {
+        when (material) {
             Material.STONE -> {
                 ret = if ((0..1).random() > 0.5) Material.STONE else Material.COBBLESTONE
             }
