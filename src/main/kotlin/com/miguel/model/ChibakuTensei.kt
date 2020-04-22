@@ -4,16 +4,12 @@ import com.miguel.Main
 import com.miguel.Manager
 import org.bukkit.Location
 import org.bukkit.Material
-import org.bukkit.entity.Entity
-import org.bukkit.entity.EntityType
-import org.bukkit.entity.FallingBlock
-import org.bukkit.entity.Player
+import org.bukkit.entity.*
 import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.util.Vector
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.sqrt
-
 
 class ChibakuTensei {
 
@@ -70,7 +66,7 @@ class ChibakuTensei {
                 val sphereMass = toSphere.size * 1200
 
                 override fun run() {
-                    if (put.size == toSphere.size)
+                    if(designatedLocation.entries.size == 0)
                         cancel()
 
                     designatedLocation.forEach { entry ->
@@ -106,13 +102,17 @@ class ChibakuTensei {
                         val subtract = designated.toVector().subtract(entity.location.toVector())
                         subtract.multiply((18.96 * sphereMass * 1200) / sqrt(location.distance(entity.location)))
 
-                        entity.velocity = subtract.normalize().multiply(2)
+                        entity.velocity = subtract.normalize().multiply(2.7)
 
                         entity.getNearbyEntities(10.0, 10.0, 10.0).forEach { nearby ->
-                            if (nearby is Player || nearby is FallingBlock)
+                            if (nearby is Player || nearby is FallingBlock) {
                                 return@forEach
+                            }
 
-                            nearby.velocity = designated.toVector().subtract(nearby.location.toVector()).normalize()
+                            val vector = add.toVector().subtract(nearby.location.toVector())
+                            vector.multiply( (18.96 * sphereMass * 150) / (sqrt(add.distance(entity.location))) )
+
+                            nearby.velocity = vector.normalize()
                         }
                     }
                 }
@@ -123,7 +123,7 @@ class ChibakuTensei {
 
                     super.cancel()
                 }
-            }.runTaskTimer(Main.instace, 0L, 0L)
+            }.runTaskTimer(Main.instace, 0L, 1L)
         }).start()
     }
 

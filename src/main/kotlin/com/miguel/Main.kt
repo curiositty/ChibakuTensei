@@ -8,7 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin
 class Main : JavaPlugin() {
 
     companion object {
-        var instace: Main? = null
+        lateinit var instace: Main
     }
 
     override fun onLoad() {

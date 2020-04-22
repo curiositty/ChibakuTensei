@@ -1,6 +1,7 @@
 package com.miguel.listener
 
 import com.miguel.model.ChibakuTensei
+import org.bukkit.Material
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
@@ -16,6 +17,8 @@ class PlayerEvents : Listener {
         val player = event.player
         val location = event.block.location
 
-        chibakuTensei.chibaku(location, 10)
+        if(player.inventory.itemInMainHand.type == Material.BEDROCK) {
+            chibakuTensei.chibaku(location, 10)
+        }
     }
 }
